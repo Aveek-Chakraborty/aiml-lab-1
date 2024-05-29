@@ -1,59 +1,94 @@
+import heapq
+
 class TreeNode:
     def __init__(self, key):
-        self.val = key  # Value of the node
-        self.left = None  # Pointer to the left child node
-        self.right = None  # Pointer to the right child node
+        self.val = key
+        self.left = None
+        self.right = None
+        self.cost = 0  # Initialize cost for RBFS
 
 def insert(root, key):
     """Insert a key into the binary search tree."""
     if root is None:
-        # If the tree is empty, create a new node with the given key
         return TreeNode(key)
     else:
-        # If the tree is not empty, recursively insert the key in the appropriate subtree
         if root.val < key:
-            # If the key is greater than the current node's value, insert it into the right subtree
             root.right = insert(root.right, key)
         else:
-            # If the key is less than or equal to the current node's value, insert it into the left subtree
             root.left = insert(root.left, key)
     return root
 
-def search(root, key, path=[]):
-    """Search for a key in the binary search tree using DFS with recursion."""
-    if root is None:
-        # If the root is None, the key does not exist in the tree
-        return None, []
+def rbfs(node, f_limit, heuristic_values, target):
+    """
+    Recursive Best-First Search (RBFS) algorithm implementation.
+    """
+    def rbfs_helper(node, f_limit):
+        if node is None:
+            return float('inf'), []
 
-    path.append(root.val)  # Add current node to the path
+        f_value = node.cost + heuristic_values[node.val]
+        if node.val == target:
+            return f_value, [node.val]
 
-    if root.val == key:
-        # If the key is found at the current node, return the node and the path
-        return root, path
+        successors = []
+        if node.left:
+            node.left.cost = node.cost + 1  # Assuming uniform cost for simplicity
+            successors.append(node.left)
+        if node.right:
+            node.right.cost = node.cost + 1  # Assuming uniform cost for simplicity
+            successors.append(node.right)
 
-    if root.val < key:
-        # If the key is greater than the current node's value, search in the right subtree
-        return search(root.right, key, path)
-    else:
-        # If the key is less than the current node's value, search in the left subtree
-        return search(root.left, key, path)
+        if not successors:
+            return float('inf'), []
 
-# Take input keys for the binary search tree
-keys = input("Enter keys for the binary search tree separated by spaces: ").split()
-keys = list(map(int, keys))
+        print("Exploring node:", node.val)
+        while True:
+            successors.sort(key=lambda x: x.cost + heuristic_values[x.val])  # Sort by f_value
+            print("Successors:", [n.val for n in successors])
+            best = successors[0]
+            alternative = successors[1] if len(successors) > 1 else None
+
+            if alternative:
+                alternative_cost = alternative.cost + heuristic_values[alternative.val]
+            else:
+                alternative_cost = float('inf')
+
+            result, path = rbfs_helper(best, min(f_limit, alternative_cost))
+            if result == float('inf'):
+                return float('inf'), []
+            if result <= f_limit:
+                path.insert(0, node.val)
+                return result, path
+
+            # Update f_limit based on the best alternative node's f_value
+            f_limit = min(f_limit, result)
+            heuristic_values[best.val] = result
+            print("Updated heuristic for node", best.val, ":", heuristic_values[best.val])
+
+    node.cost = 0
+    result, path = rbfs_helper(node, f_limit)
+    return path if result != float('inf') else None
+
+# Example data
+keys = [10, 5, 15, 2, 7, 12, 18]
 root = None
 for key in keys:
-    # Insert each key into the binary search tree
     root = insert(root, key)
 
-# Take input for the key to search
-search_key = int(input("Enter the key to search for: "))
-# Perform the search operation
-result, path = search(root, search_key)
-if result:
-    # If the key is found, print the result and the path
-    print(f"Key {search_key} found in the binary search tree.")
-    print("Path:", path)
+# Heuristic values for each node
+heuristic_values = {
+    10: 3,
+    5: 6,
+    15: 2,
+    2: 9,
+    7: 4,
+    12: 5,
+    18: 1
+}
+
+target = 7
+path = rbfs(root, float('inf'), heuristic_values, target)
+if path:
+    print("Path found:", path)
 else:
-    # If the key is not found, print a message indicating it
-    print(f"Key {search_key} not found in the binary search tree.")
+    print("Target value not found in the tree.")
