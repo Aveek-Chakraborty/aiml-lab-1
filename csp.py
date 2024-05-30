@@ -39,7 +39,7 @@ def solve_map_coloring(map, regions, colors, color_assignment={}):
     return None
 
 if __name__ == "__main__":
-    # Read the number of regions
+    # Read the number of region
     map = {}
     regions = []
     num_regions = int(input("Enter the number of regions: "))
@@ -64,4 +64,4 @@ if __name__ == "__main__":
         for region, color in coloring.items():
             print(f"{region}: {color}")
     else:
-        print("No valid coloring found.")
+        print("No valid coloring found.") 
